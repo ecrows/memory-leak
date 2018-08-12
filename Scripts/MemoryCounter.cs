@@ -7,15 +7,21 @@ namespace Gamekit2D
 {
 	public class MemoryCounter : MonoBehaviour
 	{
+		//public RandomAudioPlayer errorAudioPlayer;
 		private bool firedAlready = false;
-		private bool firstTime = true;
-		private float errorDelayTime = 3.5f;
-		private int resetMemoryValue = 256;
+		private bool firstTime = false; // Disabling for now
+		private float errorDelayTime = 3.1f;
+		private int resetMemoryValue = 512;
 		public int memory = 2498;
 		public bool leaking = false;
 		public GameObject errorCanvas;
 		public GameObject errorText;
+		public GameObject dialogueCanvas;
+		public GameObject creditsCanvas;
+
+		DialogueCanvasController dcc;
 		Text txtOut;
+		private string choose = "CHOOSE TO FORGET (1) or (2)";
 		private string preface = "CLEARING SPACE TO AVOID SHUTDOWN\n\nDELETED:\n";
 		private string shortpreface = "FORGOT:\n";
 
@@ -30,7 +36,7 @@ namespace Gamekit2D
 		};
 
 		private string[] sadmems = {
-			"YOUR LITTLE BROTHER'S LAME SECRET HANDSHAKE",
+			"YOUR SECRET HANDSHAKE WITH YOUR LITTLE BROTHER",
 			"YOUR MOTHER'S FACE",
 			"THE SMELL OF YOUR GRANDPARENTS' HOUSE",
 			"WHAT GETS YOU OUT OF BED IN THE MORNING",
@@ -39,19 +45,34 @@ namespace Gamekit2D
 
 		private List<string> memories;
 		bool endingGag = false;
+		bool showedEndText = false;
+
+		IEnumerator WaitCredits(float seconds) {
+			yield return new WaitForSeconds (seconds);
+			creditsCanvas.SetActive (true);
+		}
 
 		IEnumerator WaitPunish(float seconds) {
 			//yield return new WaitForSeconds (playerDelayTime);
 			yield return new WaitForSeconds (seconds);
-			PlayerInput.Instance.GainControl ();
-			errorCanvas.SetActive (false);
-			memory = resetMemoryValue;
-			firedAlready = false;
+
+			if (showedEndText) {
+				errorCanvas.SetActive (false);
+				dcc.ActivateCanvasWithText ("Motherfu-");
+				dcc.DeactivateCanvasWithDelay (1.7f);
+				StartCoroutine (WaitCredits(1.7f));
+			} else {
+				PlayerInput.Instance.GainControl ();
+				errorCanvas.SetActive (false);
+				memory = resetMemoryValue;
+				firedAlready = false;
+			}
 		}
 
 		// Use this for initialization
 		void Start ()
 		{
+			dcc = dialogueCanvas.GetComponent<DialogueCanvasController> ();
 			memories = new List<string>();
 			txtOut = errorText.GetComponent<UnityEngine.UI.Text>();
 
@@ -63,10 +84,18 @@ namespace Gamekit2D
 				memories.Add (mem);
 			}
 
-			InvokeRepeating ("CountDown", 0.0f, 0.04f);
+			InvokeRepeating ("CountDown", 0.0f, 0.007f);
 		}
+			
 
 		void CountDown () {
+			// Did the player choose a memory?
+			if (Input.GetKeyDown (KeyCode.Alpha1)) {
+				memory += 512;
+			} else if (Input.GetKeyDown(KeyCode.Alpha2)) {
+				memory += 512;
+			}
+
 			if (leaking) {
 				if (memory > 0) {
 					memory -= 1;
@@ -77,7 +106,14 @@ namespace Gamekit2D
 
 					firedAlready = true;
 
-					if (firstTime) {
+					if (endingGag) {
+						showedEndText = true;
+						txtOut.text = shortpreface + "BUILDING CODE";
+						errorCanvas.SetActive (true);
+						PlayerInput.Instance.ReleaseControl (true);
+						StartCoroutine (WaitPunish(2.0f));
+					}
+					else if (firstTime) {
 						firstTime = false;
 
 						if (memories.Count == 0) {
@@ -89,13 +125,10 @@ namespace Gamekit2D
 						}
 
 						errorCanvas.SetActive (true);
-						PlayerInput.Instance.ReleaseControl (true);
-						StartCoroutine (WaitPunish(8.0f));
-						return;
+						PlayerInput.Instance.ReleaseControl (false);
+						StartCoroutine (WaitPunish(5.0f));
 					}
-					else if (endingGag) {
-						txtOut.text = shortpreface + "BUILDING CODE";
-					} else {
+					else {
 						if (memories.Count == 0) {
 							txtOut.text = shortpreface + "YOU'RE NOT SURE, BUT IT FEELS IMPORTANT";
 						} else {
@@ -103,11 +136,11 @@ namespace Gamekit2D
 							txtOut.text = shortpreface + memories [index];
 							memories.RemoveAt(index);
 						}
-					}
 
-					errorCanvas.SetActive (true);
-					PlayerInput.Instance.ReleaseControl (true);
-					StartCoroutine (WaitPunish(errorDelayTime));
+						errorCanvas.SetActive (true);
+						PlayerInput.Instance.ReleaseControl (false);
+						StartCoroutine (WaitPunish(errorDelayTime));
+					}
 				}
 			}
 		}
