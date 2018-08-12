@@ -9,17 +9,22 @@ public class MemoryCounter : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		
+		InvokeRepeating ("CountDown", 0.0f, 0.5f);
 	}
-	
-	// Update is called once per frame
-	void Update ()
-	{
+
+	void CountDown () {
 		if (leaking) {
 			if (memory > 0) {
 				memory -= 1;
 			}
 		}
 	}
+
+	public void SetMemory(int mem) {
+		memory = mem;
+	}
+
+	public void SetLeaking(bool l) {
+		leaking = l;
+	}
 }
-		

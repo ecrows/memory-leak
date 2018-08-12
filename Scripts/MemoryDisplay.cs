@@ -7,6 +7,7 @@ public class MemoryDisplay : MonoBehaviour
 	public GameObject girl;
 	MemoryCounter mc;
 	Text txt;
+	public string units = "TB";
 
 	// Use this for initialization
 	void Start () {
@@ -17,7 +18,11 @@ public class MemoryDisplay : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		txt.text = "Memory remaining: " + mc.memory + "TB";
+		txt.text = "Memory remaining: " + mc.memory + units;
+	}
+
+	public void setUnits(string u) {
+		units = u;
 	}
 }
 
